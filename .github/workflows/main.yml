@@ -18,14 +18,20 @@ jobs:
           java-version: 11  # Replace with your desired Java version
 
       - name: Install Android SDK
-        uses: android-actions/setup-android-sdk@v2
-        with:
-          sdk-platform: 'android-30'  # Replace with your desired SDK platform version
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install java
+          sdk install gradle
+          sdk install android
 
       - name: Install dependencies
         run: |
+          sdkmanager --version
+          yes | sdkmanager --licenses
           sdkmanager "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository"
-          sdkmanager --list
 
       - name: Install Buildozer
         run: pip install buildozer
