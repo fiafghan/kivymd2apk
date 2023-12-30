@@ -1,48 +1,42 @@
-name: Build APK
+name: CI
 on:
   push:
-    branches:
-      - main  # Replace with your branch name
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Set up Java
-        uses: actions/setup-java@v2
+      # used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+        shell: bash
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v2
         with:
-          java-version: 11  # Replace with your desired Java version
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
 
-      - name: Install Android SDK
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl unzip
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install java
-          sdk install gradle
-          sdk install android
+      - uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Install dependencies
-        run: |
-          sdkmanager --version
-          yes | sdkmanager --licenses
-          sdkmanager "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository"
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
-      - name: Install Buildozer
-        run: pip install buildozer
-
-      - name: Build APK
-        run: |
-          buildozer init
-          buildozer android debug
-
-      - name: Upload APK artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: MyApp-APK
-          path: ./bin/MyApp-0.1-debug.apk  # Replace with the path to your APK file
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
