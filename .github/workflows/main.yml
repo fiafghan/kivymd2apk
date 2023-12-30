@@ -1,0 +1,34 @@
+name: Build APK
+on:
+  push:
+    branches:
+      - main  # Replace with your branch name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8  # Replace with your desired Python version
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer
+
+      - name: Build APK
+        run: |
+          buildozer init
+          buildozer android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: MyApp-APK
+          path: ./bin/MyApp-0.1-debug.apk  # Replace with the path to your APK file
