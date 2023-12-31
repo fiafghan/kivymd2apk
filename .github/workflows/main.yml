@@ -18,15 +18,29 @@ jobs:
       with:
         python-version: '3.8'  # Replace with your desired Python version
     
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install buildozer==1.2.0 cython==0.29.21 kivy==2.0.0 kivymd==0.104.1
+        sudo apt-get -y install build-essential git python3-pip python3-dev ffmpeg libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev libjpeg-dev libffi-dev libssl-dev zlib1g-dev
+    
+    - name: Install buildozer dependencies
+      run: |
+        pip install --upgrade pip
+        pip install cython==0.29.21 virtualenv==20.4.7
+    
+    - name: Install KivyMD dependencies
+      run: |
+        pip install kivy==2.0.0 kivymd==0.104.1
     
     - name: Download Android NDK
       run: |
-        buildozer android update
-        
+        wget https://dl.google.com/android/repository/android-ndk-r19c-linux-x86_64.zip
+        unzip -q android-ndk-r19c-linux-x86_64.zip
+        export ANDROID_NDK_HOME=$PWD/android-ndk-r19c
+    
+    - name: Set up environment variables
+      run: |
+        echo "export PATH=$PATH:$ANDROID_NDK_HOME" >> $GITHUB_ENV
+    
     - name: Build APK
       run: |
         buildozer init
